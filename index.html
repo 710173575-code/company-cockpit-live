@@ -200,9 +200,9 @@ async function initLocalControl(){
   const r=await fetch(LOCAL_CONTROL_URL+'/session',{cache:'no-store'});
   if(!r.ok)throw new Error('HTTP '+r.status);
   const j=await r.json();
-  localControl={checked:true,available:!!j.ok,token:j.token||null,keys:new Set(arr(j.controllable_keys).map(String)),note:j.note_zh||'本机控制桥在线'};
+  localControl={checked:true,available:!!j.ok,token:j.token||null,keys:new Set(arr(j.controllable_keys).map(String)),note:'本机控制桥在线；只允许启动未运行的后台。'};
  }catch(e){
-  localControl={checked:true,available:false,token:null,keys:new Set(),note:'只有在运行 Company OS 的这台电脑上才能启动/暂停后台；其他设备保持只读。'};
+  localControl={checked:true,available:false,token:null,keys:new Set(),note:'只有在运行 Company OS 的这台电脑上才能启动未运行的后台；其他设备保持只读。'};
  }
  if(page==='connections'&&D)render();
 }
