@@ -97,6 +97,10 @@ function taskTone(t){
  const tone=String(t?.supervision?.tone||'gray');
  return ['green','blue','yellow','red','gray'].includes(tone)?tone:'gray';
 }
+function taskPillClass(t){
+ const tone=taskTone(t);
+ return tone==='green'?'good':tone==='red'?'bad':tone==='yellow'?'attn':tone==='blue'?'busy':'idle';
+}
 function ageText(minutes){
  const m=Number(minutes);
  if(!Number.isFinite(m))return '暂无';
