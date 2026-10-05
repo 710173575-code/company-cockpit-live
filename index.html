@@ -305,6 +305,6 @@ document.querySelectorAll('.nav>button').forEach(b=>b.onclick=()=>setPage(b.data
 $('refreshBtn').onclick=load;$('mobileBtn').onclick=()=>$('sidebar').classList.toggle('open');
 $('drawerScrim').onclick=e=>{if(e.target===$('drawerScrim'))closeDrawer()};$('modalScrim').onclick=e=>{if(e.target===$('modalScrim'))closeModal()};
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDrawer();closeModal()}});
-render();initLocalControl();load();setInterval(load,15000);setInterval(initLocalControl,60000);
+render();initLocalControl();load();setInterval(load,5000);setInterval(initLocalControl,60000);
 </script>
 </body></html>
