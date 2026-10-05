@@ -65,8 +65,8 @@ const safeText=v=>{
   return s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 };
 const stamp=v=>{if(!v)return '—';const d=new Date(v);return Number.isNaN(d.getTime())?safeText(v):d.toLocaleString('zh-CN',{hour12:false})};
-const workLabel=v=>v==='busy'?'任务中':v==='attention'?'需督导':v==='idle'?'空闲中':v==='disabled'?'已停用':'未知';
-const workClass=v=>v==='busy'?'busy':v==='attention'?'attn':v==='idle'?'idle':v==='disabled'?'disabled':'';
+const workLabel=v=>v==='busy'?'任务中':v==='planning'?'规划中':v==='queued'?'等待派单':v==='attention'?'需督导':v==='idle'?'真正空闲':v==='disabled'?'已停用':'未知';
+const workClass=v=>v==='busy'?'busy':v==='planning'?'busy':v==='queued'?'attn':v==='attention'?'attn':v==='idle'?'idle':v==='disabled'?'disabled':'';
 const stateClass=v=>/active|ready|healthy|online|completed/i.test(v||'')?'good':/disabled|failed|offline|error|critical/i.test(v||'')?'bad':/stale|degraded|blocked|attention|pending|waiting/i.test(v||'')?'attn':'';
 const depts=()=>arr(D?.department_control);
 const summary=()=>D?.department_summary||{};
@@ -153,7 +153,7 @@ function deptCard(d){
  const tasks=arr(d.current_tasks),t=tasks[0]||d.current_task,st=d.task_stats||{},expanded=selected!=='all';
  const currentHtml=expanded
   ? (tasks.length?'<div class="task-list">'+tasks.map(x=>taskRow(x,d.department_key)).join('')+'</div>':'<div class="empty">当前部门没有开放 Mission。</div>')
-  : '<div class="task-box"><h5>'+(t?safeText(t.title):'当前无执行任务 / No active task')+'</h5>'+(t?'<div class="row between"><span class="status-pill '+taskPillClass(t)+'">'+safeText(t?.supervision?.label||t.status)+'</span><span class="tiny muted">优先级 '+safeText(t.priority)+'</span></div>'+taskProgress(t)+(t.next_focus?'<div class="summary-line line-clamp"><b>下一步：</b>'+safeText(t.next_focus)+'</div>':''):'<div class="muted tiny">当前部门没有正在执行的 Mission。</div>')+'</div>';
+  : '<div class="task-box"><h5>'+(t?safeText(t.title):'当前无执行任务 / No active execution')+'</h5>'+(t?'<div class="row between"><span class="status-pill '+taskPillClass(t)+'">'+safeText(t?.supervision?.label||t.status)+'</span><span class="tiny muted">优先级 '+safeText(t.priority)+'</span></div>'+taskProgress(t)+(t.next_focus?'<div class="summary-line line-clamp"><b>下一步：</b>'+safeText(t.next_focus)+'</div>':''):'<div class="muted tiny">当前没有执行中的任务；规划中/等待派单会在状态标签显示。</div>')+'</div>';
  const completed=arr(d.recent_completed),failed=arr(d.recent_failed);
  return '<article class="dept-card" data-card-detail="'+safeText(d.department_key)+'"><div class="dept-head"><div><h4>'+safeText(d.name)+'</h4><div class="dept-meta"><span class="status-pill '+workClass(d.work_state)+'">'+workLabel(d.work_state)+'</span><span class="status-pill '+stateClass(d.state)+'">'+safeText(d.state)+'</span></div></div><div class="connection"><i class="lamp '+(d?.backend?.connected?'on':'')+'"></i><b>'+(d?.backend?.connected?'已连接':'未连接')+'</b></div></div>'+
  (d.focus?'<div class="summary-line"><b>当前职责：</b>'+safeText(d.focus)+'</div>':'')+
