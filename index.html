@@ -84,8 +84,8 @@ function controlButton(p){
  if(!localControl.checked)return '<button class="btn" disabled>检测本机控制…</button>';
  if(!localControl.available)return '<button class="btn" disabled>仅查看 / 本机控制离线</button>';
  if(!controlCapable(p))return '<button class="btn" disabled>由系统管理</button>';
- const running=!!p.process_present;
- return '<button class="btn '+(running?'danger':'success')+'" data-process-key="'+safeText(p.process_key)+'" data-process-action="'+(running?'stop':'start')+'">'+(running?'暂停后台':'启动后台')+'</button>';
+ if(p.process_present)return '<button class="btn" disabled>运行中 / 无需操作</button>';
+ return '<button class="btn success" data-process-key="'+safeText(p.process_key)+'" data-process-action="start">启动后台</button>';
 }
 function setPage(p,key){page=p;selected=key||selected;document.querySelectorAll('.nav>button').forEach(b=>b.classList.toggle('active',b.dataset.page===p));$('sidebar').classList.remove('open');render();}
 function nav(){
@@ -209,11 +209,8 @@ async function initLocalControl(){
 async function controlProcess(button){
  const key=button.dataset.processKey,action=button.dataset.processAction;
  const p=processes().find(x=>String(x.process_key)===String(key));
- if(!p||!localControl.available||!localControl.token)return;
- const starting=action==='start';
- const msg=starting
-  ? '确定启动「'+p.name_zh+'」吗？如果对应计划任务已禁用，会同时启用它并立即启动。'
-  : '确定暂停「'+p.name_zh+'」吗？这会停止当前运行，但不会关闭下次登录自动启动。';
+ if(!p||!localControl.available||!localControl.token||action!=='start')return;
+ const msg='确定启动「'+p.name_zh+'」吗？如果对应计划任务已禁用，会同时启用它并立即启动。';
  if(!confirm(msg))return;
  button.disabled=true;button.textContent='处理中…';
  try{
@@ -228,7 +225,7 @@ async function controlProcess(button){
   setTimeout(()=>load(),3500);
  }catch(e){
   alert('操作失败：'+String(e?.message||e));
-  button.disabled=false;button.textContent=starting?'启动后台':'暂停后台';
+  button.disabled=false;button.textContent='启动后台';
  }
 }
 async function load(){
