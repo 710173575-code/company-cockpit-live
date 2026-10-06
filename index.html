@@ -297,9 +297,22 @@ async function controlProcess(button){
 }
 async function load(){
  if(loading)return;loading=true;$('refreshBtn').textContent='↻ 更新中';
- try{const r=await fetch(API,{cache:'no-store',headers:{accept:'application/json'}});if(!r.ok)throw new Error('HTTP '+r.status);const j=await r.json();D=j.data||j;$('topDot').className='mini-dot green';$('liveText').textContent='LIVE';$('sideState').textContent='实时连接';render()}
- catch(e){$('topDot').className='mini-dot red';$('liveText').textContent='OFFLINE';$('sideState').textContent='连接中断';$('page').innerHTML='<div class="empty">实时数据连接失败：'+safeText(e.message)+'</div>'}
- finally{loading=false;$('refreshBtn').textContent='↻ 刷新'}
+ const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),8000);
+ try{
+  const r=await fetch(API,{cache:'no-store',headers:{accept:'application/json'},signal:ctrl.signal});
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  const j=await r.json();D=j.data||j;
+  const stale=Boolean(D?.local_mirror&&D.local_mirror.fresh===false);
+  $('topDot').className=stale?'mini-dot':'mini-dot green';
+  $('liveText').textContent=stale?'STALE':'LIVE';
+  $('sideState').textContent=stale?'显示最后快照 / 云端同步异常':'实时连接';
+  render();
+ }catch(e){
+  $('topDot').className='mini-dot red';$('liveText').textContent='RETRY';$('sideState').textContent='数据通道异常，自动重试';
+  if(D){render()}else{$('page').innerHTML='<div class="empty">实时数据连接失败，5秒后自动重试：'+safeText(e?.name==='AbortError'?'请求超过8秒已中止':e.message)+'</div>'}
+ }finally{
+  clearTimeout(timer);loading=false;$('refreshBtn').textContent='↻ 刷新';
+ }
 }
 document.querySelectorAll('.nav>button').forEach(b=>b.onclick=()=>setPage(b.dataset.page));
 $('refreshBtn').onclick=load;$('mobileBtn').onclick=()=>$('sidebar').classList.toggle('open');
