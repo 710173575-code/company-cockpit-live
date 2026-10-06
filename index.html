@@ -295,23 +295,37 @@ async function controlProcess(button){
   button.disabled=false;button.textContent='启动后台';
  }
 }
+async function fetchJsonWithTimeout(url,timeoutMs){
+ const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),timeoutMs);
+ try{
+  const r=await fetch(url,{cache:'no-store',headers:{accept:'application/json'},signal:ctrl.signal});
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  return await r.json();
+ }finally{clearTimeout(timer)}
+}
 async function load(){
  if(loading)return;loading=true;$('refreshBtn').textContent='↻ 更新中';
- const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),8000);
+ let source='cloud';
  try{
-  const r=await fetch(API,{cache:'no-store',headers:{accept:'application/json'},signal:ctrl.signal});
-  if(!r.ok)throw new Error('HTTP '+r.status);
-  const j=await r.json();D=j.data||j;
+  let j=null;
+  try{
+   j=await fetchJsonWithTimeout(LOCAL_CONTROL_URL+'/snapshot',2500);
+   source='local';
+  }catch(localError){
+   j=await fetchJsonWithTimeout(API,8000);
+   source='cloud';
+  }
+  D=j.data||j;
   const stale=Boolean(D?.local_mirror&&D.local_mirror.fresh===false);
   $('topDot').className=stale?'mini-dot':'mini-dot green';
-  $('liveText').textContent=stale?'STALE':'LIVE';
-  $('sideState').textContent=stale?'显示最后快照 / 云端同步异常':'实时连接';
+  $('liveText').textContent=stale?'STALE':(source==='local'?'LOCAL':'LIVE');
+  $('sideState').textContent=stale?'显示最后快照 / 云端同步异常':(source==='local'?'本机实时直连':'实时连接');
   render();
  }catch(e){
   $('topDot').className='mini-dot red';$('liveText').textContent='RETRY';$('sideState').textContent='数据通道异常，自动重试';
-  if(D){render()}else{$('page').innerHTML='<div class="empty">实时数据连接失败，5秒后自动重试：'+safeText(e?.name==='AbortError'?'请求超过8秒已中止':e.message)+'</div>'}
+  if(D){render()}else{$('page').innerHTML='<div class="empty">实时数据连接失败，5秒后自动重试：'+safeText(e?.name==='AbortError'?'请求超时已中止':e.message)+'</div>'}
  }finally{
-  clearTimeout(timer);loading=false;$('refreshBtn').textContent='↻ 刷新';
+  loading=false;$('refreshBtn').textContent='↻ 刷新';
  }
 }
 document.querySelectorAll('.nav>button').forEach(b=>b.onclick=()=>setPage(b.dataset.page));
